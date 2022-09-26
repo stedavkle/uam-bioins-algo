@@ -1,15 +1,16 @@
 # %%
-from math import prod
+from math import ceil, prod, sqrt
 from time import sleep
+from turtle import update
 import pandas  as pd
 import seaborn as sns
 import numpy   as np
 import matplotlib.pyplot as plt
 
 # initialize the inertia, cognition and influence
-INERTIA = -0.4
-COGNITION = 2.55
-INFLUENCE = 1.33
+INERTIA = 0.5
+COGNITION = 2
+INFLUENCE = 1
 
 # create a dict with entry 'function' and all population values
 # define the function f1
@@ -80,7 +81,7 @@ def create_population(functions, index):
 
 #%%
 # define the function run
-def run(population, functions, index, fig):
+def run(population, functions, index):
     print('running...')
     MIN = functions[index]['MIN']
     MAX = functions[index]['MAX']
@@ -128,10 +129,13 @@ def run(population, functions, index, fig):
             print(f'iteration {iteration} with fitness {GLOBAL_BEST_FITNESS_VALUE}')
         
         if DIMENSION == 2:
-            plot2D(population, fig)
+            plot2D(population)
         elif DIMENSION == 3:
-            plot3D(population, fig)
-        # stop if global best is < 10
+            plot3D(population)
+        elif DIMENSION > 3 and iteration % 10 == 0:
+            plot(population, DIMENSION, MAX)
+        fig.suptitle('i=' + str(iteration) + ' | f=' + str(round(GLOBAL_BEST_FITNESS_VALUE, 2)), fontsize=30)
+        # stop if global best is < 100
         if abs(GLOBAL_BEST_FITNESS_VALUE) <= PRECISION:
             print('stopped after ', iteration, ' iterations')
             print('fitness: ', GLOBAL_BEST_FITNESS_VALUE)
@@ -139,15 +143,52 @@ def run(population, functions, index, fig):
         iteration += 1
     return
 
+#%%
+def init_plot(population, DIMENSION, MAX):
+    plt.ion()
+    n = ceil(sqrt(functions[index]['DIMENSION']))
+    fig, axs = plt.subplots(n, n, figsize=(7, 7))
+    positions = pd.DataFrame(population['pos'].to_numpy().tolist())
+    x = 0
+    for i in range(0, n):
+        for j in range(0, n):
+            if x < DIMENSION:
+                axs[i, j].hist(positions[x], density=True, bins=MAX, range=(-MAX, MAX))
+                #set the y axis to 0 to 1
+                axs[i, j].set_title(f'{x}')
+            else:
+                axs[i, j].axis('off')
+            x += 1
+    mng = plt.get_current_fig_manager()
+    mng.full_screen_toggle()
+    return fig, axs
+def plot(population, DIMENSION, MAX):
+    
+    n = ceil(sqrt(functions[index]['DIMENSION']))
+    positions = pd.DataFrame(population['pos'].to_numpy().tolist())
+    maxima = positions.abs().max()
+    x = 0
+    for i in range(0, n):
+        for j in range(0, n):
+            if x < DIMENSION:
+                axs[i, j].cla()
+                axs[i, j].hist(positions[x], density=True, bins=int(MAX/2), range=(min(-(MAX)/10, -maxima[x]), max(MAX/10, maxima[x])))
+            x += 1
+    fig.canvas.draw()
+    fig.canvas.flush_events()
+    return
+
 # plot the positions of the particles in the population to a scatterplot
 def init_2D_plot(population):
     plt.ion()
-    plt.axis([functions[index]['MIN'], functions[index]['MAX'], functions[index]['MIN'], functions[index]['MAX']])
     fig, ax = plt.subplots()
     x, y = population['pos'].apply(lambda x: x[0]), population['pos'].apply(lambda x: x[1])
+    plt.axis([functions[index]['MIN'], functions[index]['MAX'], functions[index]['MIN'], functions[index]['MAX']])
     sc = ax.scatter(population['pos'].apply(lambda x: x[0]), population['pos'].apply(lambda x: x[1]))
+    mng = plt.get_current_fig_manager()
+    mng.full_screen_toggle()
     return fig, sc
-def plot2D(population, fig):
+def plot2D(population):
     x, y = population['pos'].apply(lambda x: x[0]), population['pos'].apply(lambda x: x[1])
     sc.set_offsets(np.c_[x, y])
     fig.canvas.draw()
@@ -155,12 +196,16 @@ def plot2D(population, fig):
 
 def init_3D_plot(population):
     plt.ion()
+    mng = plt.get_current_fig_manager()
+    mng.full_screen_toggle()
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
     x, y, z = population['pos'].apply(lambda x: x[0]), population['pos'].apply(lambda x: x[1]), population['pos'].apply(lambda x: x[2])
     sc = ax.scatter(x, y, z)
+    mng = plt.get_current_fig_manager()
+    mng.full_screen_toggle()
     return fig, sc
-def plot3D(population, fig):
+def plot3D(population):
     x, y, z = population['pos'].apply(lambda x: x[0]), population['pos'].apply(lambda x: x[1]), population['pos'].apply(lambda x: x[2])
     sc._offsets3d = (x, y, z)
     fig.canvas.draw()
@@ -169,19 +214,30 @@ def plot3D(population, fig):
 #%%
 if __name__ == "__main__":
 
-    index = 2
-    functions[index]['DIMENSION'] = 3
+    # get input from user for which function to run
+    index = int(input('Enter the index of the function to run: '))
+    # get input from user for the dimension of the function
+    functions[index]['DIMENSION'] = int(input('Enter the dimension of the function: '))
+    # get input from user for the number of particles
+    functions[index]['POPULATION_SIZE'] = int(input('Enter the number of particles: '))
+    # get input from user for the precision
+    PRECISION = float(input('Enter the precision: '))
 
     population = create_population(functions, index)
-
+    
+    
     if functions[index]['DIMENSION'] == 2:
-        fig, sc = init_2D_plot(population)
-        plot2D(population, fig)
+        fig, sc = init_2D_plot(population)    
+        plot2D(population)
     elif functions[index]['DIMENSION'] == 3:
         fig, sc = init_3D_plot(population)
-        plot3D(population, fig)
+        plot3D(population)
+    else:
+        fig, axs = init_plot(population, functions[index]['DIMENSION'], functions[index]['MAX'])
+        plot(population, functions[index]['DIMENSION'], functions[index]['MAX'])
 
+    sleep(0.2)
     print('starting...')
-    run(population, functions, index, fig)
+    run(population, functions, index)
     sleep(5)
 # %%
