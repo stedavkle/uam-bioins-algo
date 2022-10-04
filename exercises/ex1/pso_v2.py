@@ -81,7 +81,7 @@ def create_population(functions, index):
 
 #%%
 # define the function run
-def run(population, functions, index):
+def run(population, functions, index, enable_plot):
     print('running...')
     MIN = functions[index]['MIN']
     MAX = functions[index]['MAX']
@@ -127,20 +127,22 @@ def run(population, functions, index):
         #print(population.head())
         if iteration % 100 == 0:
             print(f'iteration {iteration} with fitness {GLOBAL_BEST_FITNESS_VALUE}')
-        
-        if DIMENSION == 2:
-            plot2D(population)
-        elif DIMENSION == 3:
-            plot3D(population)
-        elif DIMENSION > 3 and iteration % 10 == 0:
-            plot(population, DIMENSION, MAX)
-        fig.suptitle('i=' + str(iteration) + ' | f=' + str(round(GLOBAL_BEST_FITNESS_VALUE, 2)), fontsize=30)
+            print('Global best pos: ', GLOBAL_BEST_FITNESS_POS)
+        if enable_plot == 1:    
+            if DIMENSION == 2:
+                plot2D(population)
+            elif DIMENSION == 3:
+                plot3D(population)
+            elif DIMENSION > 3 and iteration % 10 == 0:
+                plot(population, DIMENSION, MAX)
+            fig.suptitle('i=' + str(iteration) + ' | f=' + str(round(GLOBAL_BEST_FITNESS_VALUE, 2)), fontsize=30)
         # stop if global best is < 100
         if abs(GLOBAL_BEST_FITNESS_VALUE) <= PRECISION:
             print('stopped after ', iteration, ' iterations')
             print('fitness: ', GLOBAL_BEST_FITNESS_VALUE)
             RUN = False
         iteration += 1
+    print('Global best pos: ', GLOBAL_BEST_FITNESS_POS)
     return
 
 #%%
@@ -172,7 +174,7 @@ def plot(population, DIMENSION, MAX):
         for j in range(0, n):
             if x < DIMENSION:
                 axs[i, j].cla()
-                axs[i, j].hist(positions[x], density=True, bins=int(MAX/2), range=(min(-(MAX)/10, -maxima[x]), max(MAX/10, maxima[x])))
+                axs[i, j].hist(positions[x], density=True, bins=max(20, int(MAX/2)), range=(min(-(MAX)/10, -maxima[x]), max(MAX/10, maxima[x])))
             x += 1
     fig.canvas.draw()
     fig.canvas.flush_events()
@@ -203,6 +205,7 @@ def init_3D_plot(population):
     x, y, z = population['pos'].apply(lambda x: x[0]), population['pos'].apply(lambda x: x[1]), population['pos'].apply(lambda x: x[2])
     sc = ax.scatter(x, y, z)
     mng = plt.get_current_fig_manager()
+    sleep(0.5)
     mng.full_screen_toggle()
     return fig, sc
 def plot3D(population):
@@ -217,27 +220,28 @@ if __name__ == "__main__":
     # get input from user for which function to run
     index = int(input('Enter the index of the function to run: '))
     # get input from user for the dimension of the function
-    functions[index]['DIMENSION'] = int(input('Enter the dimension of the function: '))
+    functions[index]['DIMENSION'] = int(input('Enter the dimension of the function (0, 1, 2): '))
     # get input from user for the number of particles
     functions[index]['POPULATION_SIZE'] = int(input('Enter the number of particles: '))
     # get input from user for the precision
     PRECISION = float(input('Enter the precision: '))
+    enable_plot = input('Enable plot? (0,1): ')
 
     population = create_population(functions, index)
     
-    
-    if functions[index]['DIMENSION'] == 2:
-        fig, sc = init_2D_plot(population)    
-        plot2D(population)
-    elif functions[index]['DIMENSION'] == 3:
-        fig, sc = init_3D_plot(population)
-        plot3D(population)
-    else:
-        fig, axs = init_plot(population, functions[index]['DIMENSION'], functions[index]['MAX'])
-        plot(population, functions[index]['DIMENSION'], functions[index]['MAX'])
+    if enable_plot == 1:
+        if functions[index]['DIMENSION'] == 2:
+            fig, sc = init_2D_plot(population)    
+            plot2D(population)
+        elif functions[index]['DIMENSION'] == 3:
+            fig, sc = init_3D_plot(population)
+            plot3D(population)
+        else:
+            fig, axs = init_plot(population, functions[index]['DIMENSION'], functions[index]['MAX'])
+            plot(population, functions[index]['DIMENSION'], functions[index]['MAX'])
 
     sleep(0.2)
     print('starting...')
-    run(population, functions, index)
+    run(population, functions, index, enable_plot)
     sleep(5)
 # %%
