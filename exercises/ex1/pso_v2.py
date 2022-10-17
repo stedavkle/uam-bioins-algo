@@ -1,7 +1,6 @@
 # %%
 from math import ceil, prod, sqrt
 from time import sleep
-from turtle import update
 import pandas  as pd
 import seaborn as sns
 import numpy   as np
