@@ -217,9 +217,9 @@ def plot3D(population):
 if __name__ == "__main__":
 
     # get input from user for which function to run
-    index = int(input('Enter the index of the function to run: '))
+    index = int(input('Enter the index of the function to run (0, 1, 2): '))
     # get input from user for the dimension of the function
-    functions[index]['DIMENSION'] = int(input('Enter the dimension of the function (0, 1, 2): '))
+    functions[index]['DIMENSION'] = int(input('Enter the dimension of the function: '))
     # get input from user for the number of particles
     functions[index]['POPULATION_SIZE'] = int(input('Enter the number of particles: '))
     # get input from user for the precision
