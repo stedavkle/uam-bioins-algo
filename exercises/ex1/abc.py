@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from math import ceil, prod, sqrt, floor
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 def f0(p):
     return sum([pow(x,2) for x in p])
@@ -203,7 +204,7 @@ def run(function_index, enable_plot):
                 plot2D(bees, fig, sc)
             if DIMENSION == 3:
                 plot3D(bees, fig, sc)
-            if DIMENSION > 3 and i % 50 == 0:
+            if DIMENSION > 3 and i % 10 == 0:
                 plot(bees, fig, axs, DIMENSION, MAX)
             fig.suptitle('i=' + str(i) + ' | f=' + str(round(best_fitness[-1], 4)), fontsize=30)
 
@@ -211,6 +212,7 @@ def run(function_index, enable_plot):
         i += 1
         if best_fitness[-1] < PRECISION*10:
             running = False
+    #fig.clear()
     return best_fitness, best_bee
 
 def init_2D_plot(bees):
@@ -282,7 +284,7 @@ if __name__ == "__main__":
     # get input from user for the dimension of the function
     functions[index]['DIMENSION'] = int(input('Enter the dimension of the function: '))
     # get input from user for the number of particles
-    functions[index]['POPULATION_SIZE'] = int(input('Enter the number of particles: '))
+    functions[index]['POP_SIZE'] = int(input('Enter the number of particles: '))
     # get input for PRECISION
     functions[index]['PRECISION'] = float(input('Enter the precision: '))
     # run the algorithm
@@ -290,16 +292,14 @@ if __name__ == "__main__":
         
     best_fitness, best_bee = run(index, enable_plot)
     
-    # # clear the plot
-    plt.close('all')
+    print('Best fitness: ' + str(best_fitness[-1]))
     sleep(1)
     # plot the best fitness over the iterations
-    plt.figure()
-    plt.plot(best_fitness)
-    plt.title('Best fitness over iterations')
-    plt.xlabel('Iteration')
-    plt.ylabel('Fitness')
-    plt.show()
+    # plt.plot(best_fitness)
+    # plt.title('Best fitness over iterations')
+    # plt.xlabel('Iteration')
+    # plt.ylabel('Fitness')
+    # plt.show()
     # wait for user to close plot
     input('Press enter to close plot')
 # %%
