@@ -7,9 +7,9 @@ import numpy   as np
 import matplotlib.pyplot as plt
 
 # initialize the inertia, cognition and influence
-INERTIA = 0.5
-COGNITION = 2
-INFLUENCE = 1
+INERTIA = -0.6031
+COGNITION = -0.6485
+INFLUENCE = 2.6475
 
 # create a dict with entry 'function' and all population values
 # define the function f1
@@ -17,10 +17,10 @@ def f0(p):
     return sum([pow(x,2) for x in p])
 func0 = {   
     "f" : f0,
-    "POP_SIZE" : 25,
+    "POP_SIZE" : 95,
     "MIN" : -100,
     "MAX" : 100,
-    "V_BOUND" : 2,
+    "V_BOUND" : 1,
     "PRECISION" : 0.01,
     "DIMENSION" : 30
 }
@@ -29,11 +29,11 @@ def f1(p):
     return sum(absolut) + prod(absolut)
 func1 = {   
     "f" : f1,
-    "POP_SIZE" : 25,
+    "POP_SIZE" : 95,
     "MIN" : -10,
     "MAX" : 10,
     "V_BOUND" : 1,
-    "PRECISION" : 0.01,
+    "PRECISION" : 0.05,
     "DIMENSION" : 30
 }
 def f2(p):
@@ -47,11 +47,11 @@ def f2(p):
 
 func2 = {   
     "f" : f1,
-    "POP_SIZE" : 25,
+    "POP_SIZE" : 95,
     "MIN" : -100,
     "MAX" : 100,
-    "V_BOUND" : 3,
-    "PRECISION" : 0.02,
+    "V_BOUND" : 1,
+    "PRECISION" : 0.01,
     "DIMENSION" : 30
 }
 functions = [func0, func1, func2]
@@ -80,7 +80,8 @@ def create_population(functions, index):
 
 #%%
 # define the function run
-def run(population, functions, index, enable_plot):
+def run(population, functions, index, enable_plot, iterations=0):
+    data = []
     print('running...')
     MIN = functions[index]['MIN']
     MAX = functions[index]['MAX']
@@ -126,7 +127,9 @@ def run(population, functions, index, enable_plot):
         #print(population.head())
         if iteration % 100 == 0:
             print(f'iteration {iteration} with fitness {GLOBAL_BEST_FITNESS_VALUE}')
-            print('Global best pos: ', GLOBAL_BEST_FITNESS_POS)
+            #print('Global best pos: ', GLOBAL_BEST_FITNESS_POS)
+        
+        data.append([iteration, GLOBAL_BEST_FITNESS_VALUE])
         if enable_plot == 1:    
             if DIMENSION == 2:
                 plot2D(population)
@@ -136,13 +139,13 @@ def run(population, functions, index, enable_plot):
                 plot(population, DIMENSION, MAX)
             fig.suptitle('i=' + str(iteration) + ' | f=' + str(round(GLOBAL_BEST_FITNESS_VALUE, 2)), fontsize=30)
         # stop if global best is < 100
-        if abs(GLOBAL_BEST_FITNESS_VALUE) <= PRECISION:
+        if abs(GLOBAL_BEST_FITNESS_VALUE) <= PRECISION or iteration == iterations:
             print('stopped after ', iteration, ' iterations')
             print('fitness: ', GLOBAL_BEST_FITNESS_VALUE)
             RUN = False
         iteration += 1
     print('Global best pos: ', GLOBAL_BEST_FITNESS_POS)
-    return
+    return data
 
 #%%
 def init_plot(population, DIMENSION, MAX):
@@ -197,8 +200,6 @@ def plot2D(population):
 
 def init_3D_plot(population):
     plt.ion()
-    mng = plt.get_current_fig_manager()
-    mng.full_screen_toggle()
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
     x, y, z = population['pos'].apply(lambda x: x[0]), population['pos'].apply(lambda x: x[1]), population['pos'].apply(lambda x: x[2])
@@ -215,32 +216,59 @@ def plot3D(population):
 
 #%%
 if __name__ == "__main__":
+    if int(input('Run analysis? (0,1)')) == 0:
 
-    # get input from user for which function to run
-    index = int(input('Enter the index of the function to run (0, 1, 2): '))
-    # get input from user for the dimension of the function
-    functions[index]['DIMENSION'] = int(input('Enter the dimension of the function: '))
-    # get input from user for the number of particles
-    functions[index]['POPULATION_SIZE'] = int(input('Enter the number of particles: '))
-    # get input from user for the precision
-    PRECISION = float(input('Enter the precision: '))
-    enable_plot = input('Enable plot? (0,1): ')
+        # get input from user for which function to run
+        index = int(input('Enter the index of the function to run (0, 1, 2): '))
+        # get input from user for the dimension of the function
+        functions[index]['DIMENSION'] = int(input('Enter the dimension of the function: '))
+        # get input from user for the number of particles
+        functions[index]['POPULATION_SIZE'] = int(input('Enter the number of particles: '))
+        # get input from user for the precision
+        PRECISION = float(input('Enter the precision: '))
+        enable_plot = int(input('Enable plot? (0,1): '))
 
-    population = create_population(functions, index)
-    
-    if enable_plot == 1:
-        if functions[index]['DIMENSION'] == 2:
-            fig, sc = init_2D_plot(population)    
-            plot2D(population)
-        elif functions[index]['DIMENSION'] == 3:
-            fig, sc = init_3D_plot(population)
-            plot3D(population)
-        else:
-            fig, axs = init_plot(population, functions[index]['DIMENSION'], functions[index]['MAX'])
-            plot(population, functions[index]['DIMENSION'], functions[index]['MAX'])
+        population = create_population(functions, index)
 
-    sleep(0.2)
-    print('starting...')
-    run(population, functions, index, enable_plot)
-    sleep(5)
+        if enable_plot == 1:
+            if functions[index]['DIMENSION'] == 2:
+                fig, sc = init_2D_plot(population)    
+                plot2D(population)
+            elif functions[index]['DIMENSION'] == 3:
+                fig, sc = init_3D_plot(population)
+                plot3D(population)
+            else:
+                fig, axs = init_plot(population, functions[index]['DIMENSION'], functions[index]['MAX'])
+                plot(population, functions[index]['DIMENSION'], functions[index]['MAX'])
+        sleep(0.2)
+        print('starting...')
+
+        run(population, functions, index, enable_plot)
+        sleep(5)
+    else:
+        # analysis
+        iterlim = 1000
+        result = {}
+        for i in range(len(functions)):
+            print('function: ', i)
+            population = create_population(functions, i)
+            result[i] = run(population, functions, i, 0, iterlim)
+
+
+        # %%
+        for i in range(len(functions)):
+            data = pd.DataFrame(result[i], columns=['iteration', 'fitness'])    
+            # plot the fitness of the population over time
+            plt.plot(data['iteration'], data['fitness'])
+        # set y axis to log scale
+        plt.yscale('log')
+        plt.xlabel('iteration')
+        plt.ylabel('fitness')
+        # set title to the function name
+        plt.title('Fitness of population over time')
+        # create legend
+        plt.legend([f'function {i}' for i in range(len(functions))])
+        plt.ylim(0, 1000000)
+        plt.xlim(0, 400)
+        plt.show()
 # %%

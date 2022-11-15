@@ -1,5 +1,6 @@
 #%%
 from time import sleep
+import time
 import pandas as pd
 import numpy as np
 from math import ceil, prod, sqrt, floor
@@ -10,11 +11,11 @@ def f0(p):
     return sum([pow(x,2) for x in p])
 func0 = {   
     "f" : f0,
-    "POP_SIZE" : 25,
+    "POP_SIZE" : 95,
     "MIN" : -100,
     "MAX" : 100,
-    "V_BOUND" : 2,
-    "PRECISION" : 0.01,
+    "V_BOUND" : 1,
+    "PRECISION" : 0.1,
     "DIMENSION" : 30,
     "MAX_TRIALS" : 1000
 }
@@ -23,11 +24,11 @@ def f1(p):
     return sum(absolut) + prod(absolut)
 func1 = {   
     "f" : f1,
-    "POP_SIZE" : 25,
+    "POP_SIZE" : 95,
     "MIN" : -10,
     "MAX" : 10,
     "V_BOUND" : 1,
-    "PRECISION" : 0.01,
+    "PRECISION" : 0.1,
     "DIMENSION" : 30,
     "MAX_TRIALS" : 1000
 }
@@ -42,11 +43,11 @@ def f2(p):
 
 func2 = {   
     "f" : f1,
-    "POP_SIZE" : 25,
+    "POP_SIZE" : 95,
     "MIN" : -100,
     "MAX" : 100,
-    "V_BOUND" : 3,
-    "PRECISION" : 0.02,
+    "V_BOUND" : 1,
+    "PRECISION" : 0.1,
     "DIMENSION" : 30,
     "MAX_TRIALS" : 1000
 }
@@ -161,7 +162,8 @@ def scout_bee_phase(bees, data, function_index):
         data['fitness'][index] = functions[function_index]['f'](bees.loc[index])
     return bees, data
 # %%
-def run(function_index, enable_plot):
+def run(function_index, enable_plot, maxiter=0):
+    stat_data = []
     PRECISION = functions[function_index]['PRECISION']
     DIMENSION = functions[function_index]['DIMENSION']
     MAX = functions[function_index]['MAX']
@@ -181,12 +183,11 @@ def run(function_index, enable_plot):
         if DIMENSION >= 4:
             fig, axs = init_plot(bees, DIMENSION, MAX)
             plot(bees, fig, axs, DIMENSION, MAX)
-            
-        
+              
     best_fitness = []
     best_bee = []
 
-    i = 0
+    i = 1
     running = True
     while running:
         bees, data = employed_bee_phase(bees, data, function_index)
@@ -208,12 +209,13 @@ def run(function_index, enable_plot):
                 plot(bees, fig, axs, DIMENSION, MAX)
             fig.suptitle('i=' + str(i) + ' | f=' + str(round(best_fitness[-1], 4)), fontsize=30)
 
-
+        if i % 10 == 0:
+            stat_data.append([i, best_fitness[-1]])
         i += 1
-        if best_fitness[-1] < PRECISION*10:
+        if best_fitness[-1] < PRECISION*2 or i == maxiter:
             running = False
     #fig.clear()
-    return best_fitness, best_bee
+    return best_fitness, best_bee, stat_data
 
 def init_2D_plot(bees):
     plt.ion()
@@ -231,15 +233,14 @@ def plot2D(bees, fig, sc):
     fig.canvas.flush_events()
 def init_3D_plot(bees):
     plt.ion()
-    mng = plt.get_current_fig_manager()
-    mng.full_screen_toggle()
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
     x, y, z = bees[0], bees[1], bees[2]
     sc = ax.scatter(x, y, z)
-    mng = plt.get_current_fig_manager()
     sleep(0.5)
+    mng = plt.get_current_fig_manager()
     mng.full_screen_toggle()
+    #plt.close(1)
     return fig, sc
 def plot3D(bees, fig, sc):
     x, y, z = bees[0], bees[1], bees[2]
@@ -279,27 +280,60 @@ def plot(bees, fig, axs, DIMENSION, MAX):
     return
 #%%
 if __name__ == "__main__":
-    # get input from user for which function to run
-    index = int(input('Enter the index of the function to run (0, 1, 2): '))
-    # get input from user for the dimension of the function
-    functions[index]['DIMENSION'] = int(input('Enter the dimension of the function: '))
-    # get input from user for the number of particles
-    functions[index]['POP_SIZE'] = int(input('Enter the number of particles: '))
-    # get input for PRECISION
-    functions[index]['PRECISION'] = float(input('Enter the precision: '))
-    # run the algorithm
-    enable_plot = int(input('Enable plot? (0,1): '))
+    if int(input('Run analysis? (0,1)')) == 0:
+        # get input from user for which function to run
+        index = int(input('Enter the index of the function to run (0, 1, 2): '))
+        # get input from user for the dimension of the function
+        functions[index]['DIMENSION'] = int(input('Enter the dimension of the function: '))
+        # get input from user for the number of particles
+        functions[index]['POP_SIZE'] = int(input('Enter the number of particles: '))
+        # get input for PRECISION
+        functions[index]['PRECISION'] = float(input('Enter the precision: '))
+        # get input for maxiter
+        maxiter = int(input('Enter the max number of iterations: '))
+        # run the algorithm
+        enable_plot = int(input('Enable plot? (0,1): '))
+            
+        best_fitness, best_bee, data = run(index, enable_plot)
         
-    best_fitness, best_bee = run(index, enable_plot)
-    
-    print('Best fitness: ' + str(best_fitness[-1]))
-    sleep(1)
-    # plot the best fitness over the iterations
-    # plt.plot(best_fitness)
-    # plt.title('Best fitness over iterations')
-    # plt.xlabel('Iteration')
-    # plt.ylabel('Fitness')
-    # plt.show()
-    # wait for user to close plot
-    input('Press enter to close plot')
+        print('Best fitness: ' + str(best_fitness[-1]))
+        sleep(1)
+        # plot the best fitness over the iterations
+        # plt.plot(best_fitness)
+        # plt.title('Best fitness over iterations')
+        # plt.xlabel('Iteration')
+        # plt.ylabel('Fitness')
+        # plt.show()
+        # wait for user to close plot
+        input('Press enter to close plot')
+    else:
+        iterlim = 1500
+        result = {}
+        times = {}
+        for i in range(len(functions)):
+            print('function: ', i)
+            # get system time
+            start = time.time()
+            best_bee, best_fitness, result[i] = run(i, 0, iterlim)
+            end = time.time()
+            times[i] = end - start
+
+
+
+        # %%
+        for i in range(0,len(functions)-1):
+            data = pd.DataFrame(result[i], columns=['iteration', 'fitness'])    
+            # plot the fitness of the population over time
+            plt.plot(data['iteration'], data['fitness'])
+        # set y axis to log scale
+        plt.yscale('log')
+        plt.xlabel('iteration')
+        plt.ylabel('fitness')
+        # set title to the function name
+        plt.title('Fitness of population over time')
+        # create legend
+        plt.legend([f'function {i}' for i in range(len(functions))])
+        #plt.ylim(0, 1000000)
+        #plt.xlim(0, 400)
+        plt.show()
 # %%

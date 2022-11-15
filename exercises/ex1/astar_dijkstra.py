@@ -1,138 +1,7 @@
 #%%
-from time import sleep
-import numpy as np
-import pandas as pd
+#from _typeshed import SupportsTrunc
+import copy
 import math
-import numpy as np
-import matplotlib.pyplot as plt
-
-class AntColony():
-    def __init__(self, distances, n_ants, n_iter, decay, alpha, beta, start, end):
-        self.distances = distances
-        self.pheromones = np.ones(distances.shape) * 0.000000000000000000000000000000001
-        #wait = input("Press Enter to continue.")
-        np.fill_diagonal(self.pheromones, 0)
-        self.probabilities = np.zeros(distances.shape)
-
-        self.start = start
-        self.end = end
-    
-        self.n_ants = n_ants
-        self.ants = [Ant(self, start, end) for i in range(n_ants)]
-        self.n_iter = n_iter
-
-        self.decay = decay
-        self.alpha = alpha
-        self.beta = beta
-    def init_probs(self):
-        for i in range(self.distances.shape[0]):
-            for j in range(self.distances.shape[1]):
-                if i == j or self.distances[i, j] == 0:
-                    continue
-                self.probabilities[i, j] = 1.0 / (self.distances[i] > 0).sum()
-    def update_probs(self):
-        for i in range(self.distances.shape[0]):
-            for j in range(self.distances.shape[1]):
-                if i == j or self.distances[i, j] == 0:
-                    continue
-                
-                self.probabilities[i, j] = ((self.pheromones[i, j] ** self.alpha) * ((1.0 / self.distances[i, j]) ** self.beta)
-                                            / np.sum([(self.pheromones[i, k] ** self.alpha) * ((1.0 / self.distances[i, k]) ** self.beta) for k in range(self.distances.shape[0]) if k != i and self.distances[i, k] > 0]))
-    def update_pheromones(self):
-        self.pheromones *= self.decay
-
-        count = 1
-        for ant in self.ants:#sorted(self.ants, key=lambda ant: ant.distance):
-            if ant.goal:
-                for i in range(len(ant.path) - 1):
-                    self.pheromones[ant.path[i], ant.path[i + 1]] += 1.0 / (ant.distance/100)
-                    self.pheromones[ant.path[i + 1], ant.path[i]] += 1.0 / (ant.distance/100)
-                count -= 1
-        #print(self.pheromones.sum())
-    def run(self):
-        self.init_probs()
-        for i in range(self.n_iter):
-            #print("Iteration: ", i)
-            for ant in self.ants:
-                if ant.finished:
-                    continue
-                ant.run()
-                #print(ant.path)
-                #wait = input("Press Enter to continue.")
-
-            #self.update_probs()
-            self.update_pheromones()
-            if i % 20 == 0 or i<10:
-                goal_ants = [ant for ant in self.ants if ant.path[-1] == ant.end]
-
-                if goal_ants:
-                    #print("{} / {} ants reached the goal".format(len(goal_ants), self.n_ants))
-                    best_ant = min([a for a in self.ants if a.goal], key=lambda ant: ant.distance)
-                    x = best_ant.distance
-                    #print("I: {}, dist: {}".format(i, best_ant.distance))
-                else:
-                    #print("I: {}, dist: {}".format(i, np.inf))
-                    x = np.inf
-                plot(self.pheromones, i, x)
-
-            self.ants = [Ant(self, self.start, self.end) for i in range(self.n_ants)]
-
-        goal_ants = [a for a in self.ants if a.goal]
-        if goal_ants:
-            best_ant = min(goal_ants, key=lambda ant: ant.distance)
-            return best_ant.path, best_ant.distance
-        else:
-            return [], np.inf
-class Ant():
-    def __init__(self, colony, start=0, end=0):
-        self.colony = colony
-        self.start = start
-        self.end = end
-        self.path = [self.start]
-        self.unvisited = list(range(len(self.colony.distances)))
-        self.unvisited.remove(self.start)
-        self.distance = 0
-        self.finished = False
-        self.goal = False
-    def reset(self):
-        self.path = [self.start]
-        self.unvisited = list(range(len(self.colony.distances)))
-        self.unvisited.remove(self.start)
-        self.distance = 0
-        self.finished = False
-        self.goal = False
-    def move(self):
-        if not [x for x in self.unvisited if self.colony.distances[self.path[-1], x] > 0] or not self.unvisited:
-            #print('Ant stuck at node {}'.format(self.path[-1]))
-            self.finished = True
-            return False
-
-        #probs = (colony.pheromones[self.path[-1]] ** colony.alpha) * (colony.distances[self.path[-1]] ** colony.beta) / np.sum((colony.pheromones[self.path[-1]] ** colony.alpha) * (colony.distances[self.path[-1]] ** colony.beta))
-        probs = (colony.pheromones[self.path[-1]][self.unvisited] ** colony.alpha) * (colony.distances[self.path[-1]][self.unvisited] ** colony.beta) / np.sum((colony.pheromones[self.path[-1]][self.unvisited] ** colony.alpha) * (colony.distances[self.path[-1]][self.unvisited] ** colony.beta))
-        probs = probs / probs.sum()
-        
-        next_node = np.random.choice(self.unvisited, p=probs)
-        run = True
-        
-
-        #rint(next_node)
-        #print(probs)
-
-        #wait = input("Press Enter to continue.")
-            
-        self.path.append(next_node)
-        self.unvisited.remove(next_node)
-        #print('Ant moved to node {}'.format(next_node))
-        if next_node == self.end:
-            self.finished = True
-            self.goal = True
-        return True
-
-    def run(self):
-        #self.reset()
-        while self.finished == False:
-            self.move()
-        self.distance = self.colony.distances[self.path[:-1], self.path[1:]].sum()
 
 class DefineCity:
     def __init__(self, location, name, neighbours=[], dist_neighbours=[], parent=None, f=10000, sum_g=0):
@@ -157,6 +26,11 @@ class DefineCity:
         long_diff = source[1]-destination[1]
         dist = math.sqrt(pow(lat_diff,2)+pow(long_diff,2))
         return dist
+
+    # def __str__(self):
+    #     return ' '.join([str(a) for a in [self.name, self.location, self.parent, self.f, self.sum_g]])
+
+
 def initialize_all_cities():
     city = {}
     city['Aachen'] = DefineCity(location=[-209.60379, 249.47157], name='Aachen')
@@ -287,82 +161,85 @@ def initialize_all_cities():
     city['Wuerzburg'].neighbours = [city['Bayreuth'], city['Frankfurt/Main'], city['Fulda'], city['Nuernberg']]
     city['Wuerzburg'].dist_neighbours = [147, 130, 100, 108]
     return city
-def initialize_city_distances(cities):
-# map all cities to numbers
-    city_to_number = {}
-    number_to_city = {}
-    for i, city in enumerate(cities):
-        city_to_number[city] = i
-        number_to_city[i] = city
-    # create a matrix of distances between all cities
-    distances = np.zeros((len(cities), len(cities)))
-    for city in cities.keys():
-        for neighbour in cities[city].neighbours:
-            distances[city_to_number[city], city_to_number[neighbour.name]] = cities[city].dist_neighbours[cities[city].neighbours.index(neighbour)]
-    data = pd.DataFrame(distances)
-    data.columns = [number_to_city[i] for i in range(len(cities))]
-    data.index = [number_to_city[i] for i in range(len(cities))]
-    return distances, city_to_number, number_to_city, data
-
-def connectpoints(x,y,p1,p2, pheromone):
-    x1, x2 = x[p1], x[p2]
-    y1, y2 = y[p1], y[p2]
-    plt.plot([x1,x2],[y1,y2],'o-', linewidth=min(pheromone[p1][p2]*8, 10), color='red')
-    plt.plot([x1,x2],[y1,y2],'o-', linewidth=0.2, color='green')
-def plot(pheromone, iteration, best):
-    loc_dict = dict([(city, cities[city].location) for city in cities.keys()])
-
-    plt.scatter([v[0] for k, v in loc_dict.items()], [v[1] for k, v in loc_dict.items()], color='black')
-    # set x and y limits
-    plt.xlim(-250, 400)
-    plt.ylim(-150, 700)
-    # change size of plot
-
-    for k, v in loc_dict.items():
-        plt.annotate(k, (v[0], v[1]))
-
-    for idx, v in np.ndenumerate(distances):
-        if v != 0:
-            connectpoints([v[0] for k, v in loc_dict.items()], [v[1] for k, v in loc_dict.items()], idx[0], idx[1], pheromone)
-    plt.title('Iteration {}, Pathcost: {}'.format(iteration, best))
-    plt.show()
-    plt.draw()
-    if input('save? y') == 'y':
-        plt.savefig('handin/aco_i{}.png'.format(iteration))
-    plt.pause(0.1)
-    plt.clf()
-#%%
-if __name__ == '__main__':
-    n_ants = 100
-    n_iter = 50
-    decay = 0.1
-    alpha = 2
-    beta = 1
 
 
-    plt.ion()
-    plt.figure(figsize=(6, 8), dpi=100)
+cities = initialize_all_cities()
+
+
+def find_path(start_name, goal_name, search_mode):
+    assert search_mode in ['a*', 'dijkstra']
+    # initialize city instance variables, frontier and explored
+    start_city = cities[start_name]
+    goal_city = cities[goal_name]
+    current_city = copy.deepcopy(start_city)
+    current_city.sum_g = 0
+    current_city.f = int(current_city.h(goal_city)) + current_city.sum_g if search_mode == 'a*'\
+        else current_city.sum_g
+    frontier = [current_city]
+    explored = []
+    # TODO: Expand node, update queues and reach goal city in this section
+    while len(frontier) != 0:
+        # Find node in frontier with smallest f
+        dist = 10000
+        current_city = frontier[0]
+        for cty in frontier:
+            if cty.f <= dist:
+                dist = cty.f
+                current_city = cty
+        #if dist == 10000: return
+        #print(city.name)
+        
+        if current_city.name == goal_name:
+            #print('GOAL')
+            #print('PARENT')
+            #print(city.parent.name)
+            break
+
+        frontier.remove(current_city)
+        explored.append(current_city)
+        
+        for neighbour in current_city.neighbours:
+            dist = int(neighbour.h(goal_city)) + current_city.sum_g + current_city.g(neighbour) if search_mode == 'a*'\
+                                    else current_city.sum_g + current_city.g(neighbour)
+            
+            if not(neighbour in explored) and not(neighbour in frontier):                
+                neighbour.parent = current_city
+                neighbour.sum_g = current_city.sum_g + current_city.g(neighbour)
+                neighbour.f = dist
+                frontier.append(neighbour)
+            elif (neighbour in frontier) and (neighbour.f > dist):
+                neighbour.parent = current_city
+                neighbour.sum_g = current_city.sum_g + current_city.g(neighbour)
+                neighbour.f = dist
+
 
     
-    cities = initialize_all_cities()
-    distances, c2n, n2c, pdData = initialize_city_distances(cities)
+    #print('PARENT')
+    #print(city.parent.name)
+    
+    # TODO: return path from start to goal:
+    path = []
+    cost = current_city.sum_g
+    #city = goal_city
+    while current_city.parent != None:
+        path.insert(0,current_city.name)
+        current_city = current_city.parent
+    path.insert(0,start_city.name)
+    return (path, cost, explored)
 
 
-    # select wich city pairs to use
-    start_cities =  ['Koeln',       'Kiel',             'Stuttgart',        'Muenchen', 'Berlin']
-    goal_cities =   ['Hannover',    'Garmisch-Part.',   'Frankfurt/Main',   'Nuernberg','Hamburg']
+#start_cities = ['Hamburg', 'Bremen', 'Lindau', 'Dresden', 'Stuttgart']
+#goal_cities = ['Freiburg', 'Augsburg', 'Kiel', 'Karlsruhe', 'Stuttgart']
+start_cities = ['Berlin', 'Stuttgart', 'Muenchen', 'Berlin', 'Kiel']
+goal_cities = ['Hamburg', 'Frankfurt/Main', 'Nuernberg', 'Stuttgart', 'Garmisch-Part.']
 
-    for start, goal in zip(start_cities, goal_cities):
-        # Initialize Ant Colony
-        print('Start: {}, Goal: {}'.format(start, c2n[goal]))
-        colony = AntColony(distances, n_ants, n_iter, decay, alpha, beta, start=c2n[start], end=c2n[goal])
-        #colony = AntColony(distances, n_ants=3, n_iter=20, decay=0.6, alpha=0.8, beta=1, start=c2n[0], end=4)
-        # Run Ant Colony
-        path, cost = colony.run()
-        # Print results
-        print('AntColony: Path = {}, Cost = {}'.format(path, cost))
-        print(start, '-->', goal, ', Path:', [n2c[i] for i in path])
+for start, goal in zip(start_cities, goal_cities):
+    for mode in ['a*']:#, 'dijkstra']:
+        path, cost, explored = find_path(start, goal, mode)
+        print(mode + ':')
+        print(start, '-->', goal, ', Path:', path)
         print(start, '-->', goal, ', Cost:', cost)
+        print(start, '-->', goal, ', Explored cities:', len(explored))
         print('\n')
-    
-# %%
+    #print('\n' * 3)
+#%%
