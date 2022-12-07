@@ -18,7 +18,7 @@ class AntColony():
         self.end = end
     
         self.n_ants = n_ants
-        self.ants = [Ant(self, start, end) for i in range(n_ants)]
+        self.ants = []
         self.n_iter = n_iter
 
         self.decay = decay
@@ -52,15 +52,13 @@ class AntColony():
     def run(self):
         self.init_probs()
         for i in range(self.n_iter):
+            self.ants = [Ant(self, self.start, self.end) for i in range(self.n_ants)]
             #print("Iteration: ", i)
             for ant in self.ants:
                 if ant.finished:
                     continue
                 ant.run()
-                #print(ant.path)
-                #wait = input("Press Enter to continue.")
 
-            #self.update_probs()
             self.update_pheromones()
             if i % 20 == 0 or i<10:
                 goal_ants = [ant for ant in self.ants if ant.path[-1] == ant.end]
@@ -74,8 +72,6 @@ class AntColony():
                     #print("I: {}, dist: {}".format(i, np.inf))
                     x = np.inf
                 plot(self.pheromones, i, x)
-
-            self.ants = [Ant(self, self.start, self.end) for i in range(self.n_ants)]
 
         goal_ants = [a for a in self.ants if a.goal]
         if goal_ants:
@@ -107,18 +103,12 @@ class Ant():
             self.finished = True
             return False
 
-        #probs = (colony.pheromones[self.path[-1]] ** colony.alpha) * (colony.distances[self.path[-1]] ** colony.beta) / np.sum((colony.pheromones[self.path[-1]] ** colony.alpha) * (colony.distances[self.path[-1]] ** colony.beta))
         probs = (colony.pheromones[self.path[-1]][self.unvisited] ** colony.alpha) * (colony.distances[self.path[-1]][self.unvisited] ** colony.beta) / np.sum((colony.pheromones[self.path[-1]][self.unvisited] ** colony.alpha) * (colony.distances[self.path[-1]][self.unvisited] ** colony.beta))
         probs = probs / probs.sum()
         
         next_node = np.random.choice(self.unvisited, p=probs)
         run = True
         
-
-        #rint(next_node)
-        #print(probs)
-
-        #wait = input("Press Enter to continue.")
             
         self.path.append(next_node)
         self.unvisited.remove(next_node)
@@ -129,7 +119,6 @@ class Ant():
         return True
 
     def run(self):
-        #self.reset()
         while self.finished == False:
             self.move()
         self.distance = self.colony.distances[self.path[:-1], self.path[1:]].sum()
@@ -288,7 +277,7 @@ def initialize_all_cities():
     city['Wuerzburg'].dist_neighbours = [147, 130, 100, 108]
     return city
 def initialize_city_distances(cities):
-# map all cities to numbers
+    # map all cities to numbers
     city_to_number = {}
     number_to_city = {}
     for i, city in enumerate(cities):
@@ -303,7 +292,6 @@ def initialize_city_distances(cities):
     data.columns = [number_to_city[i] for i in range(len(cities))]
     data.index = [number_to_city[i] for i in range(len(cities))]
     return distances, city_to_number, number_to_city, data
-
 def connectpoints(x,y,p1,p2, pheromone):
     x1, x2 = x[p1], x[p2]
     y1, y2 = y[p1], y[p2]
@@ -354,13 +342,13 @@ if __name__ == '__main__':
 
     for start, goal in zip(start_cities, goal_cities):
         # Initialize Ant Colony
-        print('Start: {}, Goal: {}'.format(start, c2n[goal]))
+        print('Start: {}, Goal: {}'.format(start, goal))
         colony = AntColony(distances, n_ants, n_iter, decay, alpha, beta, start=c2n[start], end=c2n[goal])
         #colony = AntColony(distances, n_ants=3, n_iter=20, decay=0.6, alpha=0.8, beta=1, start=c2n[0], end=4)
         # Run Ant Colony
         path, cost = colony.run()
         # Print results
-        print('AntColony: Path = {}, Cost = {}'.format(path, cost))
+        #print('AntColony: Path = {}, Cost = {}'.format(path, cost))
         print(start, '-->', goal, ', Path:', [n2c[i] for i in path])
         print(start, '-->', goal, ', Cost:', cost)
         print('\n')

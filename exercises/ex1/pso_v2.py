@@ -44,7 +44,6 @@ def f2(p):
             sum +=  p[j]
         result += pow(sum,2 )
     return result
-
 func2 = {   
     "f" : f1,
     "POP_SIZE" : 95,
@@ -63,8 +62,6 @@ def create_population(functions, index):
     V_BOUND = functions[index]['V_BOUND']
     POP_SIZE = functions[index]['POP_SIZE']
 
-    # create a dataframe "partiles" with the columns 'pos', 'velocity', 'fitness', 'particleBestFitnessValue', 'particleBestFitnessPos' 
-    # and the rows from 0 to POP_SIZE
     population = pd.DataFrame(columns=['pos', 'velocity', 'fitness', 'particleBestFitnessValue', 'particleBestFitnessPos'], index=range(0, POP_SIZE))
     for i in range(0, POP_SIZE):
         # initialize the dataframe with random values, pos and particleBestFitnessPos should be an array of size DIMENSION with values between MIN and MAX, rounded to PRECISION, velocity should be between PRECISION and PRECISION*10, fitness and particleBestFitnessValue should be INFINITY
@@ -76,10 +73,7 @@ def create_population(functions, index):
     print('created population')
     return population
 
-# %%
-
 #%%
-# define the function run
 def run(population, functions, index, enable_plot, iterations=0):
     data = []
     print('running...')
@@ -182,7 +176,6 @@ def plot(population, DIMENSION, MAX):
     fig.canvas.flush_events()
     return
 
-# plot the positions of the particles in the population to a scatterplot
 def init_2D_plot(population):
     plt.ion()
     fig, ax = plt.subplots()

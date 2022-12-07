@@ -2,6 +2,7 @@
 from time import sleep
 import time
 import pandas as pd
+pd.options.mode.chained_assignment = None  # default='warn'
 import numpy as np
 from math import ceil, prod, sqrt, floor
 import matplotlib.pyplot as plt
@@ -85,21 +86,18 @@ def employed_bee_phase(bees, data, function_index):
 
     # for each employed bee
     for index, bee in bees[:employed_count].iterrows():
-        # select a random dimension
         dimension = np.random.randint(0, DIMENSION)
-        # select a random bee
         random_bee = bees.sample(1)
         # calculate the new position
         new_bee = bee.copy()
         new_bee[dimension] = new_bee[dimension] + np.random.rand() * (new_bee[dimension] - random_bee[dimension])
 
 
-        # if the new position is out of bounds, set it to the bound
         if new_bee[dimension] < MIN:
             new_bee[dimension] = MIN
         elif new_bee[dimension] > MAX:
             new_bee[dimension] = MAX
-        # if new fitness is better than old fitness, replace old position with new position
+
         new_fitness = functions[function_index]['f'](new_bee)
         if new_fitness < data['fitness'][index]-PRECISION:
             data['fitness'][index] = new_fitness
@@ -119,16 +117,12 @@ def onlooker_bee_phase(bees, data, function_index):
     employed_count = ceil(POP_SIZE / 2)
     onlocker_count = POP_SIZE - employed_count
 
-    # for each onlooker bee
     for index, bee in bees[employed_count:].iterrows():
-        # select a random bee based on fitness
         random_bee = bees[:employed_count].sample(1, weights=data['fitness'])
-        # select a random dimension
         dimension = np.random.randint(0, DIMENSION)
-        # calculate the new position
         new_bee = bee.copy()
         new_bee[dimension] = new_bee[dimension] + np.random.rand() * (new_bee[dimension] - random_bee[dimension])
-        # if the new position is out of bounds, set it to the bound
+
         if new_bee[dimension] < MIN:
             new_bee[dimension] = MIN
         elif new_bee[dimension] > MAX:
@@ -216,6 +210,7 @@ def run(function_index, enable_plot, maxiter=0):
             running = False
     #fig.clear()
     return best_fitness, best_bee, stat_data
+
 
 def init_2D_plot(bees):
     plt.ion()
